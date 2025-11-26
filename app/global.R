@@ -24,6 +24,8 @@ library(treemapify)
 # pestquestions <- fread("data/pestquestions_est3.csv")          # "pestquestions_est3.csv" contains FinnPRIO assessments. Each pest is in a column!/ It is used in tab 3. Compare pests by questions
 hv <- fread("data/hv.csv")                                     # "hv.csv" contains FinnPRIO hypervolume scores./It is used in tab 4. Rank pests
 
+# Connect to the FinnPRIO database and read tables
+# 'project-vol/my-folder/my-file.txt'
 db_file <- list.files("data/", pattern = "FinnPrio_DB_", recursive = TRUE, full.names = TRUE)
 #get the latest file if multiple
 if(length(db_file) > 1){

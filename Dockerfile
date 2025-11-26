@@ -1,12 +1,33 @@
-FROM rocker/geospatial:4.5.0
-RUN apt-get update -y && apt-get install -y  make pandoc libicu-dev libx11-dev libcurl4-openssl-dev libssl-dev libjpeg-dev libpng-dev libxml2-dev zlib1g-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev libtiff-dev libwebp-dev && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
-RUN echo "options(renv.config.pak.enabled = FALSE, repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" | tee /usr/local/lib/R/etc/Rprofile.site | tee /usr/lib/R/etc/Rprofile.site
-RUN R -e 'install.packages("remotes")'
-RUN R -e 'remotes::install_version("renv", version = "1.1.4")'
-COPY renv.lock renv.lock
-RUN --mount=type=cache,id=renv-cache,target=/root/.cache/R/renv R -e 'renv::restore()'
-WORKDIR /srv/shiny-server/
-COPY . /srv/shiny-server/
+# Base image
+FROM rocker/shiny:4.5.0
+
+# General updates
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y git libxml2-dev libmagick++-dev libssl-dev libharfbuzz-dev libfribidi-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install the required packages
+# Recreate the R environment using renv package
+RUN Rscript -e 'install.packages(c("renv"))'
+COPY /renv.lock /srv/shiny-server/renv.lock
+RUN Rscript -e 'setwd("/srv/shiny-server/");renv::restore();'
+
+# Copy the app files (scripts, data, etc.)
+RUN rm -rf /srv/shiny-server/*
+COPY /app/ /srv/shiny-server/
+
+# Ensure that the expected user is present in the container
+RUN if id shiny &>/dev/null && [ "$(id -u shiny)" -ne 999 ]; then \
+        userdel -r shiny; \
+        id -u 999 &>/dev/null && userdel -r "$(id -un 999)"; \
+    fi; \
+    useradd -u 999 -m -s /bin/bash shiny; \
+    chown -R shiny:shiny /srv/shiny-server/ /var/lib/shiny-server/ /var/log/shiny-server/
+
+# Other settings
+USER shiny
 EXPOSE 3838
-CMD R -e 'shiny::runApp("/srv/shiny-server",host="0.0.0.0",port=3838)'
+
+CMD ["/usr/bin/shiny-server"]
