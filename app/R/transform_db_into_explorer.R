@@ -1,0 +1,184 @@
+## prepare cleanfinnprioresults
+species_data <- simulations |> 
+  # left_join(simulationSummaries) |> 
+  left_join(assessments) |> 
+  left_join(pests |> 
+              left_join(quaran) |> 
+              left_join(taxa, by = "idTaxa", suffix = c(".q",".t"))
+  ) |> 
+  # mutate(inEurope = as.logical(inEurope)) |> 
+  mutate(inEurope = as.logical(inEurope)) |> 
+  select(idSimulation, scientificName, name.t, endDate, name.q, eppoCode, inEurope) |> 
+  rename("pest" = scientificName,
+         "assessment_date" = endDate,
+         "eppo_code" = eppoCode,
+         "presence_in_europe" = inEurope, 
+         "quarantine_status" = name.q,
+         "taxonomic_group" = name.t)
+
+sim_data <- simulations |> 
+  ## pick the latest
+  group_by(idAssessment) |> 
+  arrange(desc(date), desc(idSimulation)) |> 
+  slice(1) |> 
+  ungroup() |> 
+  ## complete the data
+  left_join(simulationSummaries) |> 
+  select(idSimulation, variable, q5, q25, median, mean, q75, q95) |> 
+  # 2. Pivot wider so each variable becomes columns with suffixes
+  pivot_wider(
+    names_from = variable,
+    values_from = c(q5, q25, median, mean, q75, q95),
+    names_glue = "{variable}_{.value}"
+  ) |> 
+  select(idSimulation, 
+         ENTRYA_q25, ENTRYA_median, ENTRYA_q75, ENTRYA_q5, ENTRYA_mean, ENTRYA_q95,
+         ENTRYB_q25, ENTRYB_median, ENTRYB_q75, ENTRYB_q5, ENTRYB_mean, ENTRYB_q95,
+         ESTABLISHMENT_q25, ESTABLISHMENT_median, ESTABLISHMENT_q75, ESTABLISHMENT_q5, ESTABLISHMENT_mean, ESTABLISHMENT_q95,
+         INVASIONA_q25, INVASIONA_median, INVASIONA_q75, INVASIONA_q5, INVASIONA_mean, INVASIONA_q95,
+         IMPACT_q25, IMPACT_median, IMPACT_q75, IMPACT_q5, IMPACT_mean, IMPACT_q95,
+         PREVENTABILITY_median, PREVENTABILITY_mean, 
+         CONTROLLABILITY_median, CONTROLLABILITY_mean, 
+         MANAGEABILITY_median,  MANAGEABILITY_mean, 
+         RISKA_median, RISKA_mean, RISKB_median, RISKB_mean)
+# "RISKA_q25"              "RISKB_q25" 
+
+cleanfinnprioresults <- species_data |> 
+  left_join(sim_data) |>
+  select(-idSimulation) |> 
+  # 3. Rename columns to match your desired format
+  rename(
+         "entry_5perc" = ENTRYA_q5, 
+         "entry_25perc" = ENTRYA_q25, 
+         "entry_median" = ENTRYA_median, 
+         "entry_mean" = ENTRYA_mean, 
+         "entry_75perc" = ENTRYA_q75,
+         "entry_95perc" = ENTRYA_q95,
+         "establishment_and_spread_5perc" = ESTABLISHMENT_q5,
+         "establishment_and_spread_25perc" = ESTABLISHMENT_q25, 
+         "establishment_and_spread_median" = ESTABLISHMENT_median, 
+         "establishment_and_spread_mean" = ESTABLISHMENT_mean,
+         "establishment_and_spread_75perc" = ESTABLISHMENT_q75,
+         "establishment_and_spread_95perc" = ESTABLISHMENT_q95,
+         "invasion_5perc" = INVASIONA_q5,
+         "invasion_25perc" = INVASIONA_q25, 
+         "invasion_median" = INVASIONA_median, 
+         "invasion_mean" = INVASIONA_mean,
+         "invasion_75perc" = INVASIONA_q75,
+         "invasion_95perc" = INVASIONA_q95,
+         "impact_5perc" = IMPACT_q5,
+         "impact_25perc" = IMPACT_q25, 
+         "impact_median" = IMPACT_median, 
+         "impact_mean" = IMPACT_mean,
+         "impact_75perc" = IMPACT_q75,
+         "impact_95perc" = IMPACT_q95,
+         "preventability_median" = PREVENTABILITY_median,
+         "preventability_mean" = PREVENTABILITY_mean,
+         "controlability_median" = CONTROLLABILITY_median, 
+         "controlability_mean" = CONTROLLABILITY_mean,
+         "manageability_median" = MANAGEABILITY_median,
+         "manageability_mean" = MANAGEABILITY_mean,
+         "riska_median" = RISKA_median,
+         "riska_mean" = RISKA_mean,
+         "riskb_median" = RISKB_median,
+         "riskb_mean" = RISKB_mean
+         )
+
+
+# print(cleanfinnprioresults)
+## Prepare pestquestions
+questions_opt <- lapply(seq(1,nrow(questions_main)), function(i) {
+  df <- fromJSON(questions_main$list[i])
+  df$idQuestion <- questions_main$idQuestion[i]
+  df |> select(opt, text, idQuestion)
+}) |> bind_rows()
+# 
+# questions_entry
+# 
+# assessments
+# answers_main
+
+
+full_grid <- expand.grid(idAssessment = assessments$idAssessment,
+                         idQuestion = questions_main$idQuestion)
+
+# 2. Identify missing rows
+missing_rows <- full_grid  |> 
+  anti_join(answers_main, by = c("idAssessment","idQuestion")) |> 
+  mutate(
+    idAnswer = NA,  # or generate new IDs later
+    min = NA,
+    likely = NA,
+    max = NA,
+    justification = ""
+  )
+
+# 3. Append missing rows to answers
+answers_complete <- bind_rows(answers_main, missing_rows) |> 
+  arrange(idAssessment, idQuestion)
+
+# # Optional: generate new idAnswer for missing rows
+# answers_complete <- answers_complete |> 
+#   mutate(idAnswer = ifelse(is.na(idAnswer),
+#                            max(answers_main$idAnswer, na.rm = TRUE) + row_number(),
+#                            idAnswer))
+
+
+# Assume you have data frames: questions, answers, assessments, pests
+# 1. Join answers with questions
+answers_long <- answers_complete |> 
+  select(-idAnswer ) |> 
+  left_join(questions_main, by = "idQuestion") |> 
+  # 2. Join with assessments to get pest IDs
+  left_join(assessments |> 
+              group_by(idPest) |>
+              arrange(desc(valid), desc(endDate)) |>   # valid first, then latest date
+              slice(1) |>                              # pick the top row per group
+              ungroup(), 
+            by = "idAssessment") |> 
+  # 3. Join with pests to get pest names
+  left_join(pests, by = "idPest") |> 
+  # 4. Create a column for answer type (most likely, min, max)
+  pivot_longer(cols = c(min, likely, max),
+               names_to = "Answer for",
+               values_to = "Answer")
+
+# 5. Build the final table: group by question and spread pests as columns
+final_table <- answers_long  |> 
+  select(group, idQuestion, `Answer for`, scientificName , Answer)  |> 
+  pivot_wider(names_from = scientificName , values_from = Answer) |> 
+  arrange(group, idQuestion) |> 
+  rename("Codes" = group) |> 
+  as.data.frame()
+
+
+replace_opts <- function(column, idQuestion, lookup, questions) {
+  # Join each value with its description
+  sapply(seq_along(column), function(i) {
+    val <- column[i]
+    qid <- idQuestion[i]
+    type <- questions$type[questions$idQuestion == qid]
+    if (type == "minmax") {
+      desc <- lookup$text[lookup$opt == val & lookup$idQuestion == qid]
+      res <- if (length(desc) == 1) paste0(val, ". ", desc) else val
+    } else {
+      desc <- lookup$text[lookup$idQuestion == qid]
+      res <- if (!is.na(val)) paste0(desc ,": Yes") else paste0(desc ,": No")
+    }
+    return(res)
+  })
+}
+
+# Apply to pest columns
+for (col in pests$scientificName) {
+  if (col %in% colnames(final_table))
+    final_table[[col]] <- replace_opts(final_table[[col]], final_table$idQuestion, questions_opt, questions_main)
+}
+
+pestquestions <- final_table |> 
+  left_join(questions_main |> 
+              select(idQuestion, group, number, question)) |> 
+  mutate(Question = paste0(group, number, ": ", question)) |> 
+  arrange(number)
+pestquestions$Question <- ifelse(pestquestions$'Answer for' != "min", "", pestquestions$Question)
+# select(Codes, idQuestion, Question, 'Answer for')

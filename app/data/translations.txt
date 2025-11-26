@@ -1,0 +1,25 @@
+## Translations done
+maahantulo_hallinnan_kanssa_mediaani          → Entry (median) entry_median
+asettuminen_ja_leviaminen_mediaani            → Establishment and spread (median) establishment_and_spread_median
+invaasion_todennakoisyys_hallinnan_kanssa_mediaani → Invasion (median) invasion_median
+vaikutukst_mediaani                           → Impact (median) impact_median
+hallittavuus_mediaani                          → Manageability (median) manageability_median
+
+maahantulon_hallittavuus_mediaani             → Preventability (median) preventability_median
+leviamisen_hallittavuus_mediaani              → Controllability (median) controlability_median
+
+tuhooja                                   → pest 
+"Sort" = "tuhooja", 
+tuhoojanimi                                   → pest_name
+tuhoojaryhma                                  → Taxonomic group taxonomic_group
+tuhoojastatus_eu_2016_2031_mukaan             → Quarantine status quarantine_status
+esiintyyko_tuhooja_euroopassa                 → Presence in Europe presence_in_europe
+havukasvit_uh, lehtipuut_ja_pensaat_uh, etc.  → Threatened sectors (Conifers, Broadleaves, etc.)
+
+
+err_25_ja_75_prosenttipiste  Whiskers for y whiskers_for_y
+err_25_ja_75_prosenttipiste1 Whiskers for x whiskers_for_x
+
+invaasion_todennakoisyys_hallinnan_kanssa_ 75_prosenttipiste 75perc
+25_prosenttipiste 25perc
+75_prosenttipiste 75perc
