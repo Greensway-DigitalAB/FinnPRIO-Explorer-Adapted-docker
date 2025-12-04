@@ -36,36 +36,38 @@ sim_data <- simulations |>
          ENTRYB_q25, ENTRYB_median, ENTRYB_q75, ENTRYB_q5, ENTRYB_mean, ENTRYB_q95,
          ESTABLISHMENT_q25, ESTABLISHMENT_median, ESTABLISHMENT_q75, ESTABLISHMENT_q5, ESTABLISHMENT_mean, ESTABLISHMENT_q95,
          INVASIONA_q25, INVASIONA_median, INVASIONA_q75, INVASIONA_q5, INVASIONA_mean, INVASIONA_q95,
+         INVASIONB_q25, INVASIONB_median, INVASIONB_q75, INVASIONB_q5, INVASIONB_mean, INVASIONB_q95,
          IMPACT_q25, IMPACT_median, IMPACT_q75, IMPACT_q5, IMPACT_mean, IMPACT_q95,
          PREVENTABILITY_median, PREVENTABILITY_mean, 
          CONTROLLABILITY_median, CONTROLLABILITY_mean, 
          MANAGEABILITY_median,  MANAGEABILITY_mean, 
-         RISKA_median, RISKA_mean, RISKB_median, RISKB_mean)
-# "RISKA_q25"              "RISKB_q25" 
+         RISKA_q25, RISKA_median,  RISKA_q75, RISKA_q5, RISKA_mean, RISKA_q95,
+         RISKB_q25, RISKB_median,  RISKB_q75, RISKB_q5, RISKB_mean, RISKB_q95)
+# 
 
 cleanfinnprioresults <- species_data |> 
   left_join(sim_data) |>
   select(-idSimulation) |> 
   # 3. Rename columns to match your desired format
   rename(
-         "entry_5perc" = ENTRYA_q5, 
-         "entry_25perc" = ENTRYA_q25, 
-         "entry_median" = ENTRYA_median, 
-         "entry_mean" = ENTRYA_mean, 
-         "entry_75perc" = ENTRYA_q75,
-         "entry_95perc" = ENTRYA_q95,
+         "entry_5perc" = ENTRYB_q5, 
+         "entry_25perc" = ENTRYB_q25, 
+         "entry_median" = ENTRYB_median, 
+         "entry_mean" = ENTRYB_mean, 
+         "entry_75perc" = ENTRYB_q75,
+         "entry_95perc" = ENTRYB_q95,
          "establishment_and_spread_5perc" = ESTABLISHMENT_q5,
          "establishment_and_spread_25perc" = ESTABLISHMENT_q25, 
          "establishment_and_spread_median" = ESTABLISHMENT_median, 
          "establishment_and_spread_mean" = ESTABLISHMENT_mean,
          "establishment_and_spread_75perc" = ESTABLISHMENT_q75,
          "establishment_and_spread_95perc" = ESTABLISHMENT_q95,
-         "invasion_5perc" = INVASIONA_q5,
-         "invasion_25perc" = INVASIONA_q25, 
-         "invasion_median" = INVASIONA_median, 
-         "invasion_mean" = INVASIONA_mean,
-         "invasion_75perc" = INVASIONA_q75,
-         "invasion_95perc" = INVASIONA_q95,
+         "invasion_5perc" = INVASIONB_q5,
+         "invasion_25perc" = INVASIONB_q25, 
+         "invasion_median" = INVASIONB_median, 
+         "invasion_mean" = INVASIONB_mean,
+         "invasion_75perc" = INVASIONB_q75,
+         "invasion_95perc" = INVASIONB_q95,
          "impact_5perc" = IMPACT_q5,
          "impact_25perc" = IMPACT_q25, 
          "impact_median" = IMPACT_median, 
@@ -78,10 +80,12 @@ cleanfinnprioresults <- species_data |>
          "controlability_mean" = CONTROLLABILITY_mean,
          "manageability_median" = MANAGEABILITY_median,
          "manageability_mean" = MANAGEABILITY_mean,
-         "riska_median" = RISKA_median,
-         "riska_mean" = RISKA_mean,
-         "riskb_median" = RISKB_median,
-         "riskb_mean" = RISKB_mean
+         "risk_5perc" = RISKB_q5,
+         "risk_25perc" = RISKB_q25,
+         "risk_median" = RISKB_median,
+         "risk_mean" = RISKB_mean,
+         "risk_75perc" = RISKB_q75,
+         "risk_95perc" = RISKB_q95,
          )
 
 
@@ -114,8 +118,14 @@ missing_rows <- full_grid  |>
   )
 
 # 3. Append missing rows to answers
-answers_complete <- bind_rows(answers_main, missing_rows) |> 
-  arrange(idAssessment, idQuestion)
+if (nrow(missing_rows) > 0) {
+  answers_complete <- bind_rows(answers_main, missing_rows) |> 
+    arrange(idAssessment, idQuestion)  
+} else {
+  answers_complete <- answers_main |> 
+    arrange(idAssessment, idQuestion)  
+}
+
 
 # # Optional: generate new idAnswer for missing rows
 # answers_complete <- answers_complete |> 
@@ -130,11 +140,12 @@ answers_long <- answers_complete |>
   select(-idAnswer ) |> 
   left_join(questions_main, by = "idQuestion") |> 
   # 2. Join with assessments to get pest IDs
-  left_join(assessments |> 
+  right_join(assessments |>
               group_by(idPest) |>
               arrange(desc(valid), desc(endDate)) |>   # valid first, then latest date
-              slice(1) |>                              # pick the top row per group
-              ungroup(), 
+              slice_max(order_by = endDate) |>         # pick the top row per group
+              # slice(1) |>                              # pick the top row per group
+              ungroup(),
             by = "idAssessment") |> 
   # 3. Join with pests to get pest names
   left_join(pests, by = "idPest") |> 
@@ -146,7 +157,8 @@ answers_long <- answers_complete |>
 # 5. Build the final table: group by question and spread pests as columns
 final_table <- answers_long  |> 
   select(group, idQuestion, `Answer for`, scientificName , Answer)  |> 
-  pivot_wider(names_from = scientificName , values_from = Answer) |> 
+  pivot_wider(names_from = scientificName, 
+              values_from = Answer) |> 
   arrange(group, idQuestion) |> 
   rename("Codes" = group) |> 
   as.data.frame()

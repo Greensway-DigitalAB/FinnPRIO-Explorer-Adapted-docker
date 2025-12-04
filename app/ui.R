@@ -242,7 +242,6 @@ ui <- function(request){
                         )
                       )
              ),
-             
              tabPanel("2. Show pests in data table",
                       tabsetPanel(id = "all_assessments",
                                   tabPanel(#id = "all_assessments", 
@@ -261,8 +260,35 @@ ui <- function(request){
                                   
                       )
              ),
-             
-             tabPanel("3. Compare pests by questions",
+             tabPanel("3. Risk rank Plot",
+                      fluidPage(
+                        fluidRow(
+                          column(9,
+                                 plotOutput(outputId = "riskrank_plot",
+                                            height = "900px"#, 
+                                            # brush = brushOpts(id = "plot_brush", resetOnNew = TRUE)
+                                            )
+                                 ),
+                          column(3,
+                                wellPanel(
+                                  fluidRow(
+                                    column(7,
+                                           #Download with options:
+                                           downloadButton(outputId = "download_risk", 
+                                                          label = "Save Plot")
+                                    ),
+                                    column(5,offset = 0,
+                                           radioButtons(inputId = "extension_risk", 
+                                                        label = NULL,
+                                                        choices = c("png", "pdf"), inline = FALSE)
+                                           )
+                                    )
+                                  )
+                          )
+                        )
+                      )
+             ),
+             tabPanel("4. Compare pests by questions",
                       fluidPage(
                         fluidRow(
                           column(3,
@@ -331,9 +357,10 @@ ui <- function(request){
                                       wellPanel( 
                                         p(tags$p(
                                           tags$b(style = "font-size:13px;",
-                                                 "FinnPRIO Explorer Adapted facilitates examination of assessments made with the FinnPRIO model", 
-                                                 tags$a("(Heikkila et al. 2016)",href="https://doi.org/10.1007/s10530-016-1123-4", target="_blank"),". It was developed in 
-                                                 the Risk Assessment Unit of the Finnish Food Authority, and it contains all the FinnPRIO assessments done for Finland.")),
+                                                 "FinnPRIO Explorer Adapted presents results from FinnPRIO assessments conducted for Sweden made with the FinnPRIO model", 
+                                                 tags$a("(Heikkila et al. 2016)",href="https://doi.org/10.1007/s10530-016-1123-4", target="_blank"),
+                                                 ". It is a modified version of the original app FinnPRIO-Explorer developed in the Risk Assessment Unit of the Finnish Food Authority.",
+                                                 tags$a("(Marinova-Todorova et al. 2022)",href="https://finnprio-explorer.2.rahtiapp.fi/", target="_blank"))),
                                           tags$br(),
                                           tags$b("FinnPRIO model"),
                                           tags$p(),
@@ -350,44 +377,45 @@ ui <- function(request){
                                                  of points. For each question, the most likely answer option and the plausible minimum and maximum options 
                                                  are selected based on the available scientific evidence. The selected answer options are used to define 
                                                  a PERT probability distribution and the total section scores are obtained with Monte Carlo simulation. 
-                                                 The resulting probability distributions of the section scores describe the uncertainty of the assessment."),
+                                                 The resulting probability distributions of the section scores describe the uncertainty of the assessment.
+                                                 Summary statistics of the score distributions can be explored in the tab 'Plot pests on a graph'"),
                                           
-                                          tags$p(),
-                                          tags$p(style = "font-size:13px;",
-                                                 "In FinnPRIO Explorer Adapted, summary statistics (median and 25th and 75th percentiles) of the score distributions 
-                                                 can be explored in the tab 'Plot pests on a graph' while ranking that is based on the whole probability 
-                                                 distributions can be studied in the tab 'Rank pests'."),
                                           tags$br(),
-                                          tags$b("FinnPRIO assessments for Finland"),
-                                          tags$p(),
-                                          tags$p(style = "font-size:13px;",
-                                                 "The FinnPRIO assessments included in the app were done using the FinnPRIO graphical user interface ", 
-                                                 tags$a("(Marinova-Todorova et al. 2019)",href="https://doi.org/10.5281/zenodo.2784027", target="_blank"),"."),
-                                          tags$p(),
-                                          tags$p(style = "font-size:13px;",
-                                                 "The probability distributions of the scores were simulated with 5000 iterations. The lambda parameter 
-                                                 of the PERT distributions was set to 1, implying a low confidence of the most likely estimate. Equal 
-                                                 weight was given to economic (50%) and environmental and social impacts (50%). The likelihood of entry 
-                                                 is assessed taking into account the current management measures."),
+                                          tags$b("FinnPRIO-Explorer Adapted vs. FinnPRIO-Explorer"),
+                                          tags$p(style = "font-size:13px;","FinnPRIO-Explorer Adapted introduces additional functionality: risk scores are 
+                                                 shown directly in the interface and a ranking based on risk is included. Users can also select to display all 
+                                                 scores not only as median values but also as mean values. The uncertainty is displayed by showing the 5th percentile 
+                                                 and the 95th percentile."),
                                           tags$br(),
-                                          tags$b("Ranking FinnPRIO assessments using the hypervolume approach"),
+                                          tags$b("FinnPRIO assessments for Sweden"),
                                           tags$p(),
-                                          tags$p(style = "font-size:13px;", 
-                                                 "To facilitate comparison of the FinnPRIO score distributions, a hypervolume (HV) approach was used to 
-                                                 aggregate distributions into a simple single-dimensional form that reveals the preference order relationship 
-                                                 of the distributions (for details, see  ", 
-                                                 tags$a("Yemshanov et al. 2012,",href="https://doi.org/10.1111/j.1472-4642.2011.00848.x", target="_blank"),  
-                                                 tags$a("2017;",href="https://doi.org/10.1016/j.jenvman.2017.02.021", target="_blank"), "for practical examples, see",
-                                                 tags$a("Tuomola et al. 2018;",href="https://doi.org/10.3391/mbi.2018.9.2.05", target="_blank"), 
-                                                 tags$a("Marinova-Todorova et al. 2020",href="https://doi.org/10.1111/epp.12667", target="_blank"),")."),
+                                          tags$p(style = "font-size:13px;",
+                                                 "The results presented in this app are based on all FinnPRIO assessments done for Sweden and the calculations 
+                                                 were done using the FinnPRIO-Assessor app (TO DO)", 
+                                                 tags$a("(ZENODO)",href="https://doi.org/10.5281/zenodo.2784027", target="_blank"),"."),
                                           tags$p(),
-                                          tags$p(style = "font-size:13px;", 
-                                                 "Ranking with the pairwise stochastic dominance rule and the HV indicator calculations were performed using 
-                                                 a stand-alone program written in C++ that applies the hypervolume calculation algorithm from", 
-                                                 tags$a("While et al. (2012)", href="https://ieeexplore.ieee.org/document/5766730", target="_blank"), ". 
-                                                 The program was kindly provided by Denys Yemshanov from Natural Resources Canada. The cumulative distribution 
-                                                 functions were calculated from the score distributions at 70 equal intervals and ordered using the first-order 
-                                                 stochastic dominance rule.")
+                                          tags$p(style = "font-size:13px;",
+                                                 "The probability distributions of the scores were simulated with 50 000 iterations. The likelihood of entry 
+                                                 is assessed taking into account the current management measures.")
+                                          # tags$br(),
+                                          # tags$b("Ranking FinnPRIO assessments using the hypervolume approach"),
+                                          # tags$p(),
+                                          # tags$p(style = "font-size:13px;", 
+                                          #        "To facilitate comparison of the FinnPRIO score distributions, a hypervolume (HV) approach was used to 
+                                          #        aggregate distributions into a simple single-dimensional form that reveals the preference order relationship 
+                                          #        of the distributions (for details, see  ", 
+                                          #        tags$a("Yemshanov et al. 2012,",href="https://doi.org/10.1111/j.1472-4642.2011.00848.x", target="_blank"),  
+                                          #        tags$a("2017;",href="https://doi.org/10.1016/j.jenvman.2017.02.021", target="_blank"), "for practical examples, see",
+                                          #        tags$a("Tuomola et al. 2018;",href="https://doi.org/10.3391/mbi.2018.9.2.05", target="_blank"), 
+                                          #        tags$a("Marinova-Todorova et al. 2020",href="https://doi.org/10.1111/epp.12667", target="_blank"),")."),
+                                          # tags$p(),
+                                          # tags$p(style = "font-size:13px;", 
+                                          #        "Ranking with the pairwise stochastic dominance rule and the HV indicator calculations were performed using 
+                                          #        a stand-alone program written in C++ that applies the hypervolume calculation algorithm from", 
+                                          #        tags$a("While et al. (2012)", href="https://ieeexplore.ieee.org/document/5766730", target="_blank"), ". 
+                                          #        The program was kindly provided by Denys Yemshanov from Natural Resources Canada. The cumulative distribution 
+                                          #        functions were calculated from the score distributions at 70 equal intervals and ordered using the first-order 
+                                          #        stochastic dominance rule.")
                                         )
                                       )),
                                
@@ -412,21 +440,13 @@ ui <- function(request){
                                                           A model for ranking plant pests based on risk (Version 1.0). Finnish Food Authority. ",
                                                           tags$a("doi.org/10.5281/zenodo.2784027",href="https://doi.org/10.5281/zenodo.2784027", target="_blank")),
                                                    tags$br(),
-                                                   tags$p(style = "font-size:13px;","Tuomola J, Yemshanov D, Huitu H & Hannunen S (2018) Mapping risks of pest invasions based on the spatio-temporal 
-                                                          distribution of hosts. Management of Biological Invasions 9, 115- 126. ",
-                                                          tags$a("doi.org/10.3391/mbi.2018.9.2.05",href="https://doi.org/10.3391/mbi.2018.9.2.05", target="_blank")),
+                                                   tags$p(style = "font-size:13px;","Marinova-Todorova M, Tuomola J & Hannunen S. (2022) FinnPRIO-Explorer - A tool for examining assessments made with the FinnPRIO model.
+                                                          Finnish Food Authority. Available at ", tags$a("https://finnprio-explorer.2.rahtiapp.fi/", target="_blank"),
+                                                          tags$a("https://doi.org/10.5281/zenodo.7016771",href="https://doi.org/10.5281/zenodo.7016771", target="_blank")),
                                                    tags$br(),
-                                                   tags$p(style = "font-size:13px;","While L, Bradstreet L & Barone L (2012) A fast way of calculating exact hypervolumes. IEEE Transactions 
-                                                          on Evolutionary Computation 16, 86- 95. doi:",
-                                                          tags$a("10.1109/TEVC.2010.2077298",href="https://ieeexplore.ieee.org/document/5766730", target="_blank")),
-                                                   tags$br(),
-                                                   tags$p(style = "font-size:13px;","Yemshanov D, Koch FH, Bo L, Fournier R, Cook G & Turgeon JJ (2017) A new hypervolume approach for assessing 
-                                                          environmental risks. Journal of Environmental Management 193, 188- 200. ",
-                                                          tags$a("doi.org/10.1016/j.jenvman.2017.02.021",href="https://doi.org/10.1016/j.jenvman.2017.02.021", target="_blank")),
-                                                   tags$br(),
-                                                   tags$p(style = "font-size:13px;","Yemshanov D, Koch FH, Lyons B, Ducey M & Koehler K (2012) A dominance-based approach to map risks of 
-                                                          ecological invasions in the presence of severe uncertainty. Diversity and Distributions 18, 33- 46.",
-                                                          tags$a("doi.org/10.1111/j.1472-4642.2011.00848.x",href="https://doi.org/10.1111/j.1472-4642.2011.00848.x", target="_blank"))
+                                                   tags$p(style = "font-size:13px;","Ruete, A., Björklund, N., & Boberg, J. (2025). FinnPRIO-Explorer Adapted: Explore and visualize FinnPRIO assessment results (Version 1.0) 
+                                                          [Web application]. Swedish University of Agricultural Sciences. Available from ",
+                                                          tags$a("doi.org/10.5281/zenodo.17813062",href="https://doi.org/10.5281/zenodo.17813062", target="_blank"))
                                                  ))
                                                  
                                         ),
@@ -435,19 +455,18 @@ ui <- function(request){
                                                    tags$br(),
                                                    tags$p(style = "font-size:13px;",
                                                           "The source code is available at ",
-                                                          tags$a("Zenodo",href="https://doi.org/10.5281/zenodo.7016771", target="_blank"),
-                                                          " under the ",tags$a("GNU General Public License version 3", href="https://opensource.org/licenses/GPL-3.0", target="_blank"), ".")
+                                                          tags$a("Zenodo",href="https://doi.org/10.5281/zenodo.17813062", target="_blank"),
+                                                          " under the ",tags$a("GNU General Public License version 4", href="https://creativecommons.org/licenses/by/4.0/legalcode", target="_blank"), ".")
                                                    
                                                  ))
                                         ),
-                                        tabPanel("How to refer?",
+                                        tabPanel("Cite this app?",
                                                  p(tags$p(
                                                    tags$br(),
                                                    tags$p(style = "font-size:13px;",
-                                                          "Marinova-Todorova M, Tuomola J and Hannunen S (2022) FinnPRIO-Explorer - 
-                                                          A tool for examining assessments made with the FinnPRIO model. Finnish Food Authority, 
-                                                          Helsinki, Finland.",
-                                                          "Available at ", tags$a("https://finnprio-explorer.rahtiapp.fi/", href="https://finnprio-explorer.rahtiapp.fi/", target="_blank"),", ",tags$a("doi.org/10.5281/zenodo.7016771", href="https://doi.org/10.5281/zenodo.7016771", target="_blank"))
+                                                          "Ruete, A., Björklund, N., & Boberg, J. (2025). FinnPRIO-Explorer Adapted: Explore and visualize FinnPRIO assessment results (Version 1.0) [Web application]. Swedish University of Agricultural Sciences. Available from ",
+                                                          tags$a("https://finnprio-explorer-adapted.serve.scilifelab.se/app/finnprio-explorer-adapted", href="https://finnprio-explorer-adapted.serve.scilifelab.se/app/finnprio-explorer-adapted", target="_blank"),", ",
+                                                          tags$a("doi.org/10.5281/zenodo.17813062", href="https://doi.org/10.5281/zenodo.17813062", target="_blank"))
                                                    
                                                  ))
                                         )

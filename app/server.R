@@ -23,17 +23,17 @@ function(input, output, session) {
         need(thr_sec, "Select a threatened sector(s)")
       )
       
-    }else  {
+    } else  {
       
       cleanfinnprioresults |> 
         filter(
           quarantine_status  %in% input$quarantine_status,
           taxonomic_group %in% input$taxonomic_group,
           presence_in_europe %in% input$presence_in_europe,
-          entry_median > input$entry_score[1] & entry_median < input$entry_score[2],
-          establishment_and_spread_median > input$establishment_score[1] & establishment_and_spread_median < input$establishment_score[2],
-          invasion_median > input$invasion_score[1] & invasion_median < input$invasion_score[2],
-          impact_median > input$impact_score[1] & impact_median < input$impact_score[2]
+          entry_median >= input$entry_score[1] & entry_median <= input$entry_score[2],
+          establishment_and_spread_median >= input$establishment_score[1] & establishment_and_spread_median <= input$establishment_score[2],
+          invasion_median >= input$invasion_score[1] & invasion_median <= input$invasion_score[2],
+          impact_median >= input$impact_score[1] & impact_median <= input$impact_score[2]
         )
     }
   })
@@ -86,19 +86,19 @@ function(input, output, session) {
            pest, 
            taxonomic_group, 
            presence_in_europe,
-           entry_25perc,
+           entry_5perc,
            # paste0("entry_", input$center), #median,
            entry_median,
-           entry_75perc,
-           establishment_and_spread_25perc,
+           entry_95perc,
+           establishment_and_spread_5perc,
            establishment_and_spread_median,
-           establishment_and_spread_75perc,
-           invasion_25perc,
+           establishment_and_spread_95perc,
+           invasion_5perc,
            invasion_median, 
-           invasion_75perc,
-           impact_25perc,
+           invasion_95perc,
+           impact_5perc,
            impact_median,
-           impact_75perc
+           impact_95perc
     )
   })
   
@@ -122,18 +122,18 @@ function(input, output, session) {
                                "Pest" = "pest", 
                                "Taxonomic group" = "taxonomic_group", 
                                "Presence in Europe" = "presence_in_europe",
-                               "Entry, min" = "entry_25perc",
+                               "Entry, 5th percentile" = "entry_5perc",
                                "Entry, median" = "entry_median",
-                               "Entry, max" = "entry_75perc",
-                               "Establishment and spread, min" = "establishment_and_spread_25perc",
+                               "Entry, 95th percentile" = "entry_95perc",
+                               "Establishment and spread, 5th percentile" = "establishment_and_spread_5perc",
                                "Establishment and spread, median" = "establishment_and_spread_median",
-                               "Establishment and spread, max" = "establishment_and_spread_75perc",
-                               "Invasion, min" = "invasion_25perc",
+                               "Establishment and spread, 95th percentile" = "establishment_and_spread_95perc",
+                               "Invasion, 5th percentile" = "invasion_5perc",
                                "Invasion, median" = "invasion_median", 
-                               "Invasion, max" = "invasion_75perc",
-                               "Impact, min" = "impact_25perc",
+                               "Invasion, 95th percentile" = "invasion_95perc",
+                               "Impact, 5th percentile" = "impact_5perc",
                                "Impact, median" = "impact_median",
-                               "Impact, max" = "impact_75perc"
+                               "Impact, 95th percentile" = "impact_95perc"
                   ),
                   class = 'cell-border stripe',
                   container = tbl_hdr, # -> Transforms the table header into 2 rows. To make changes go to 'tbl_hdr' in functions.R
@@ -151,7 +151,7 @@ function(input, output, session) {
                                       if(input$xaxis == "establishment_and_spread_median" | input$yaxis == "establishment_and_spread_median") {
                                         list(targets = c(7,8,9), visible = TRUE)
                                       } else list(targets = c(7,8,9), visible = FALSE),
-                                      if(input$xaxis == "impact_mediaani" | input$yaxis == "impact_mediaani") {
+                                      if(input$xaxis == "impact_median" | input$yaxis == "impact_median") {
                                         list(targets = c(13,14,15), visible = TRUE)
                                       } else list(targets = c(13,14,15), visible = FALSE)
                     ),
@@ -167,10 +167,10 @@ function(input, output, session) {
                     paging = FALSE)) |> 
       
       formatStyle("Pest",  color = "black", fontWeight = "bold", fontStyle = "normal") |>
-      formatRound(c("Entry, min", "Entry, median", "Entry, max", "Establishment and spread, min",
-                    "Establishment and spread, median", "Establishment and spread, max",
-                    "Invasion, min", "Invasion, median", "Invasion, max",
-                    "Impact, min", "Impact, median", "Impact, max"), 2) |>
+      formatRound(c("Entry, 5th percentile", "Entry, median", "Entry, 95th percentile", 
+                    "Establishment and spread, 5th percentile", "Establishment and spread, median", "Establishment and spread, 95th percentile",
+                    "Invasion, 5th percentile", "Invasion, median", "Invasion, 95th percentile",
+                    "Impact, 5th percentile", "Impact, median", "Impact, 95th percentile"), 2) |>
       formatStyle("Entry, median",
                   background = styleColorBar(cleanfinnprioresults$entry_median, "#DAE375"),
                   backgroundSize = "98% 88%",
@@ -194,21 +194,22 @@ function(input, output, session) {
     
   })
   
-  ## Generate a plot in "1. Select pests to plot"-tab:----
+  # Generate a plot in "1. Select pests to plot"-tab:----
   plot_output <- reactive({   
     req(selected_status())
-    
+
     p <- ggplot(selected_status(), #selected_status1(),
-                aes_string(x = input$xaxis, 
-                           y = input$yaxis, 
-                           color = "quarantine_status"
+                # aes_string(x = input$xaxis,
+                aes(x = !!sym(input$xaxis),
+                    y = !!sym(input$yaxis), 
+                    color = quarantine_status
                 )) + 
       
       geom_point(size = 3) +  
       
       xlim(min = 0, max = 1) + ylim(min = 0, max = 1)  + 
       labs(
-        caption = paste("    The dots indicate the simulated median score, and the whiskers show the 25th and the 75th percentiles of the distribution of the scores.
+        caption = paste("    The dots indicate the simulated median score, and the whiskers show the 5th and the 95th percentiles of the distribution of the scores.
                          \n    Number of pests: ", nrow(selected_status())), #selected_status1()
         color = "" # "Quarantine status:"
       ) +
@@ -233,7 +234,7 @@ function(input, output, session) {
             legend.position = "bottom") +
       
       #Add to scale_color_manual 'limits = force', if want to update the legend. Note that the order becomes alphabetical!
-      scale_color_manual(aesthetics = "color", values = cols,limits = force) +
+      scale_color_manual(aesthetics = "color", values = cols_pal, limits = force) +
       
       # Zoom the plot:
       coord_cartesian(xlim = c(input$xlims[1], input$xlims[2]), ylim = c(input$ylims[1], input$ylims[2]), expand = TRUE)
@@ -247,7 +248,7 @@ function(input, output, session) {
       p <- p+labs(x = "Entry score")
     } else if(input$xaxis == "establishment_and_spread_median") {
       p <- p+labs(x = "Establishment and spread score")
-    } else if(input$xaxis == "impact_mediaani") {
+    } else if(input$xaxis == "impact_median") {
       p <- p+labs(x = "Impact score")
     }
     # Add label to Y:
@@ -277,7 +278,7 @@ function(input, output, session) {
         geom_hline(yintercept = input$threshold, 
                    linetype="dotted",
                    colour = "red", 
-                   size = 1, 
+                   linewidth = 1, 
                    na.rm = FALSE)} 
     
     # Threshold line (X): 
@@ -286,11 +287,11 @@ function(input, output, session) {
         geom_vline(xintercept = input$thresholdX, 
                    linetype="dotted",
                    colour = "red", 
-                   size = 1, 
+                   linewidth = 1, 
                    na.rm = FALSE)}
     
     
-    # Display pests' names when select checkbox: ----
+    ## Display pests' names when select checkbox: ----
     p <- p +
       {if(input$pest_name)    
         geom_text(aes(label = pest), 
@@ -299,54 +300,51 @@ function(input, output, session) {
                   hjust = -0.08)} 
     
     
-    # Display error bars from 25th and 75th percentile when select checkbox for X: ----
+    ## Display error bars from 5th and 95th percentile when select checkbox for X: ----
     p <- p +  
       {if(input$whiskers_for_x && input$xaxis == "invasion_median") 
-        geom_errorbar(aes(xmax = invasion_75perc, 
-                          xmin = invasion_25perc),  
+        geom_errorbar(aes(xmax = invasion_95perc, 
+                          xmin = invasion_5perc),  
                       width = 0.01)
         
         else if(input$whiskers_for_x && input$xaxis == "establishment_and_spread_median") 
-          geom_errorbar(aes(xmax = establishment_and_spread_75perc, 
-                            xmin = establishment_and_spread_25perc),  
+          geom_errorbar(aes(xmax = establishment_and_spread_95perc, 
+                            xmin = establishment_and_spread_5perc),  
                         width = 0.01)
         
         else if(input$whiskers_for_x && input$xaxis == "entry_median") 
-          geom_errorbar(aes(xmax = entry_75perc, 
-                            xmin = entry_25perc),  
+          geom_errorbar(aes(xmax = entry_95perc, 
+                            xmin = entry_5perc),  
                         width = 0.01)
         
         else if(input$whiskers_for_x && input$xaxis == "impact_median") 
-          geom_errorbar(aes(xmax = impact_75perc, 
-                            xmin = impact_25perc),  
+          geom_errorbar(aes(xmax = impact_5perc, 
+                            xmin = impact_95perc),  
                         width = 0.01)} 
     
     
-    # Display error bars from 25th and 75th percentile when select checkbox for Y: ----
+    ## Display error bars from 5th and 95th percentile when select checkbox for Y: ----
     p <- p + 
       {if(input$whiskers_for_y && input$yaxis == "impact_median") 
-        geom_errorbar(aes(ymax = impact_75perc, 
-                          ymin = impact_25perc),  
+        geom_errorbar(aes(ymax = impact_95perc, 
+                          ymin = impact_5perc),  
                       width = 0.01)
         
         else if(input$whiskers_for_y && input$yaxis == "invasion_median") 
-          geom_errorbar(aes(ymax = invasion_75perc, 
-                            ymin = invasion_25perc),  
+          geom_errorbar(aes(ymax = invasion_95perc, 
+                            ymin = invasion_5perc),  
                         width = 0.01)
         
         else if(input$whiskers_for_y && input$yaxis == "establishment_and_spread_median") 
-          geom_errorbar(aes(ymax = establishment_and_spread_75perc, 
-                            ymin = establishment_and_spread_25perc),  
+          geom_errorbar(aes(ymax = establishment_and_spread_95perc, 
+                            ymin = establishment_and_spread_5perc),  
                         width = 0.01)
         
         else if(input$whiskers_for_y && input$yaxis == "entry_median") 
-          geom_errorbar(aes(ymax = entry_75perc, 
-                            ymin = entry_25perc),  
+          geom_errorbar(aes(ymax = entry_95perc, 
+                            ymin = entry_5perc),  
                         width = 0.01)}  
-    
     p
-    
-    
   })
   
   
@@ -393,7 +391,7 @@ function(input, output, session) {
                          establishment_and_spread_median,
                          invasion_median, 
                          impact_median,
-                         riska_median,
+                         risk_median,
                          preventability_median,
                          controlability_median,
                          manageability_median,
@@ -411,7 +409,7 @@ function(input, output, session) {
                  "Establishment and spread" = "establishment_and_spread_median",
                  "Invasion" = "invasion_median", 
                  "Impact" = "impact_median",
-                 "Risk A" = "riska_median",
+                 "Risk" = "risk_median",
                  "Preventability" = "preventability_median",
                  "Controllability" = "controlability_median",
                  "Manageability" = "manageability_median",
@@ -447,7 +445,7 @@ function(input, output, session) {
       # escape = c(1,2, 4:13)) %>% 
       
       formatRound(c("Entry","Establishment and spread", "Invasion", 
-                    "Impact", "Risk A", "Preventability", "Controllability", "Manageability"), 3) |> 
+                    "Impact", "Risk", "Preventability", "Controllability", "Manageability"), 3) |> 
       formatStyle("Pest",  fontWeight = "bold", fontStyle = "normal") |> 
       
       formatStyle("Entry",
@@ -470,8 +468,8 @@ function(input, output, session) {
                   backgroundSize = "98% 88%",
                   backgroundRepeat = "no-repeat",
                   backgroundPosition = "center") |> 
-      formatStyle("Risk A",
-                  background = styleColorBar(cleanfinnprioresults$riska_median, "#DE4C9A"),
+      formatStyle("Risk",
+                  background = styleColorBar(cleanfinnprioresults$risk_median, "#A77DC2"),
                   backgroundSize = "98% 88%",
                   backgroundRepeat = "no-repeat",
                   backgroundPosition = "center") |> 
@@ -517,7 +515,7 @@ function(input, output, session) {
                          establishment_and_spread_mean,
                          invasion_mean, 
                          impact_mean,
-                         riska_mean,
+                         risk_mean,
                          preventability_mean,
                          controlability_mean,
                          manageability_mean,
@@ -535,7 +533,7 @@ function(input, output, session) {
                  "Establishment and spread" = "establishment_and_spread_mean",
                  "Invasion" = "invasion_mean", 
                  "Impact" = "impact_mean",
-                 "Risk A" = "riska_mean",
+                 "Risk" = "risk_mean",
                  "Preventability" = "preventability_mean",
                  "Controllability"= "controlability_mean",
                  "Manageability"= "manageability_mean",
@@ -571,7 +569,7 @@ function(input, output, session) {
       # escape = c(1,2, 4:13)) %>% 
       
       formatRound(c("Entry","Establishment and spread", "Invasion", 
-                    "Impact", "Risk A", "Preventability", "Controllability", "Manageability"), 3) |> 
+                    "Impact", "Risk", "Preventability", "Controllability", "Manageability"), 3) |> 
       formatStyle("Pest",  fontWeight = "bold", fontStyle = "normal") |> 
       
       formatStyle("Entry",
@@ -594,8 +592,8 @@ function(input, output, session) {
                   backgroundSize = "98% 88%",
                   backgroundRepeat = "no-repeat",
                   backgroundPosition = "center") |> 
-      formatStyle("Risk A",
-                  background = styleColorBar(cleanfinnprioresults$riska_mean, "#DE4C9A"),
+      formatStyle("Risk",
+                  background = styleColorBar(cleanfinnprioresults$risk_mean, "#A77DC2"),
                   backgroundSize = "98% 88%",
                   backgroundRepeat = "no-repeat",
                   backgroundPosition = "center") |> 
@@ -612,15 +610,110 @@ function(input, output, session) {
                      year = 'numeric' 
                    )
                  ))
-    
   })
   
   
-  # observe({
-  #   updateSelectInput(session,"pest1_sel",choices=colnames(pestquestions))
-  #   #updateSelectInput(session,"sizes",choices=colnames(df_p_samp()))
-  # }) 
+  # Generate Risk rank plot ----
+  plot_risk_output <- reactive({   
+    data <- cleanfinnprioresults |> 
+      mutate(pest_label = paste0(pest, " [",eppo_code,"]"))
+    # |> 
+    #   mutate(label = fct_reorder(pest_label, risk_mean, .desc = TRUE)) 
+    #arrange(desc(risk_mean))
+    
+    
+    risk_order <- data |>
+      arrange(risk_mean) |>
+      pull(pest_label)
+    
+    
+    p <- ggplot(data,
+                aes(x = risk_median, 
+                    y = pest_label#, 
+                    # color = quarantine_status
+                )) + 
+      
+      geom_point(size = 3) +  
+      
+      xlim(min = 0, max = 1) + #ylim(min = 0, max = 1)  + 
+      scale_y_discrete(limits = risk_order) +
+      labs(
+        caption = paste("    The dots indicate the simulated median risk score, and the whiskers show the 5th and the 95th percentiles of the distribution of the scores.
+                         \n    Number of pests: ", nrow(cleanfinnprioresults))#,
+        # color = "" # "Quarantine status:"
+      ) +
+      theme_bw() +
+      #### Size of the plot scales:
+      theme(axis.text = element_text(size=12), 
+            #### Size of the plot labels:
+            axis.title = element_text(size=14,face="bold"),
+            #### Size of the plot title:
+            plot.title = element_text(size=16,hjust=0.5, vjust=0.25, face="bold"),
+            #### Size of the caption that shows number of pests:
+            plot.caption = element_text(size=10, hjust=0, face="bold"), 
+            plot.caption.position = "plot",
+            axis.title.x=element_text(vjust=-1),
+            axis.title.y=element_text(vjust=1),
+            legend.text = element_text(size=10),
+            legend.direction = "horizontal",
+            legend.position = "bottom") +
+      guides(colour = guide_legend(nrow = 1)) #+
+      
+      #Add to scale_color_manual 'limits = force', if want to update the legend. 
+      # Note that the order becomes alphabetical!
+      # scale_color_manual(aesthetics = "color", values = cols_pal) #+, limits = force
+      
+      # Zoom the plot:
+      # coord_cartesian(xlim = c(input$xlims[1], input$xlims[2]), ylim = c(input$ylims[1], input$ylims[2]), expand = TRUE)
+    
+    
+    # Plot conditions:---
+      p <- p + 
+        labs(x = "Risk score") +
+        labs( y = "Pest") 
+
+    
+    # # Threshold line (X): 
+    # p <- p +
+    #   # {if(input$thresholdX)
+    #     geom_vline(xintercept = 0.5, #input$thresholdX,
+    #                linetype = "dotted",
+    #                colour = "red",
+    #                linewidth = 1,
+    #                na.rm = FALSE)
+    # # }
+
+    # ## Display pests' names when select checkbox: ----
+    # p <- p +
+    #   {if(input$pest_name)
+    #     geom_text(aes(label = pest),
+    #               size = 4,
+    #               vjust = -0.05,
+    #               hjust = -0.08)
+    # }
+    
+    ## Display error bars from 5th and 95th percentile when select checkbox for X: ----
+    p <- p +
+      geom_errorbar(aes(xmax = risk_95perc,
+                        xmin = risk_5perc),
+                    width = 0.01)
+    p
+  })
   
+  output$riskrank_plot <- renderPlot({
+    plot_risk_output()
+  })
+  
+  ## Download the Risk rank plot:----
+  output$download_risk <- downloadHandler(
+    filename = function() {
+      paste("plot_risk", input$extension_risk, sep = ".")
+    },
+    content = function(file){
+      ggsave(file, plot_risk_output(), 
+             device = input$extension_risk,  width = 15, height = 10)
+    }
+  )
   
   ## Generate table with FinnPRIO assessments allowing comparison of two pests in "3. Compare pests by questions"-tab:----
   output$pest_1_2 <- DT::renderDataTable({
