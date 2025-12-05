@@ -41,6 +41,7 @@ questions_main <- dbReadTable(consql, "questions")
 questions_entry <- dbReadTable(consql, "pathwayQuestions")
 
 assessments <- dbReadTable(consql, "assessments")
+entryPathways <- dbReadTable(consql, "entryPathways")
 answers_main <- dbReadTable(consql, "answers")
 answers_entry <- dbReadTable(consql, "pathwayAnswers")
 

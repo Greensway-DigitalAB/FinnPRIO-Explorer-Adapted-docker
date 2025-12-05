@@ -761,7 +761,7 @@ function(input, output, session) {
       # (https://rstudio.github.io/DT/functions.html), (https://rstudio.github.io/DT/010-style.html):
       formatStyle(columns = 1:2, 
                   
-                  fontWeight = styleEqual(c("most likely", ""),
+                  fontWeight = styleEqual(c("likely", ""),
                                           c('bold', '')),
                   
                   fontStyle = styleEqual(c("min", "max"),
