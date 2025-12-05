@@ -391,8 +391,8 @@ ui <- function(request){
                                           tags$p(),
                                           tags$p(style = "font-size:13px;",
                                                  "The results presented in this app are based on all FinnPRIO assessments done for Sweden and the calculations 
-                                                 were done using the FinnPRIO-Assessor app (TO DO)", 
-                                                 tags$a("(ZENODO)",href="https://doi.org/10.5281/zenodo.2784027", target="_blank"),"."),
+                                                 were done using the FinnPRIO-Assessor app", 
+                                                  tags$a("(ZENODO)",href="https://doi.org/10.5281/zenodo.17816319", target="_blank")),
                                           tags$p(),
                                           tags$p(style = "font-size:13px;",
                                                  "The probability distributions of the scores were simulated with 50 000 iterations. The likelihood of entry 
