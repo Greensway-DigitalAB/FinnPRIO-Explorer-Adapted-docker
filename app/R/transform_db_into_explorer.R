@@ -221,7 +221,7 @@ missing_rows <- full_grid  |>
 # 3. Append missing rows to answers
 if (nrow(missing_rows) > 0) {
   answers_complete <- bind_rows(answers_entry, missing_rows) |> 
-    arrange(idAssessment, idQuestion)  
+    arrange(idEntryPathway, idPathQuestion)  
 } else {
   answers_complete <- answers_entry |> 
     arrange(idEntryPathway, idPathQuestion)  
