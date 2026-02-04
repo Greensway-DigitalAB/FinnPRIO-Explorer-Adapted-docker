@@ -265,9 +265,7 @@ ui <- function(request){
                         fluidRow(
                           column(9,
                                  plotOutput(outputId = "riskrank_plot",
-                                            height = "900px"#, 
-                                            # brush = brushOpts(id = "plot_brush", resetOnNew = TRUE)
-                                            )
+                                            height = "1200px")
                                  ),
                           column(3,
                                 wellPanel(
