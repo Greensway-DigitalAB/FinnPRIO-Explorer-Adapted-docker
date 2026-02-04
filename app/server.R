@@ -617,10 +617,6 @@ function(input, output, session) {
   plot_risk_output <- reactive({   
     data <- cleanfinnprioresults |> 
       mutate(pest_label = paste0(pest, " [",eppo_code,"]"))
-    # |> 
-    #   mutate(label = fct_reorder(pest_label, risk_mean, .desc = TRUE)) 
-    #arrange(desc(risk_mean))
-    
     
     risk_order <- data |>
       arrange(risk_mean) |>
@@ -629,18 +625,16 @@ function(input, output, session) {
     
     p <- ggplot(data,
                 aes(x = risk_median, 
-                    y = pest_label#, 
-                    # color = quarantine_status
+                    y = pest_label
                 )) + 
       
       geom_point(size = 3) +  
       
-      xlim(min = 0, max = 1) + #ylim(min = 0, max = 1)  + 
+      xlim(min = 0, max = 1) + 
       scale_y_discrete(limits = risk_order) +
       labs(
         caption = paste("    The dots indicate the simulated median risk score, and the whiskers show the 5th and the 95th percentiles of the distribution of the scores.
-                         \n    Number of pests: ", nrow(cleanfinnprioresults))#,
-        # color = "" # "Quarantine status:"
+                         \n    Number of pests: ", nrow(cleanfinnprioresults))
       ) +
       theme_bw() +
       #### Size of the plot scales:
@@ -657,41 +651,10 @@ function(input, output, session) {
             legend.text = element_text(size=10),
             legend.direction = "horizontal",
             legend.position = "bottom") +
-      guides(colour = guide_legend(nrow = 1)) #+
-      
-      #Add to scale_color_manual 'limits = force', if want to update the legend. 
-      # Note that the order becomes alphabetical!
-      # scale_color_manual(aesthetics = "color", values = cols_pal) #+, limits = force
-      
-      # Zoom the plot:
-      # coord_cartesian(xlim = c(input$xlims[1], input$xlims[2]), ylim = c(input$ylims[1], input$ylims[2]), expand = TRUE)
-    
-    
-    # Plot conditions:---
-      p <- p + 
-        labs(x = "Risk score") +
-        labs( y = "Pest") 
+      guides(colour = guide_legend(nrow = 1)) + 
+      labs(x = "Risk score") +
+      labs( y = "Pest") 
 
-    
-    # # Threshold line (X): 
-    # p <- p +
-    #   # {if(input$thresholdX)
-    #     geom_vline(xintercept = 0.5, #input$thresholdX,
-    #                linetype = "dotted",
-    #                colour = "red",
-    #                linewidth = 1,
-    #                na.rm = FALSE)
-    # # }
-
-    # ## Display pests' names when select checkbox: ----
-    # p <- p +
-    #   {if(input$pest_name)
-    #     geom_text(aes(label = pest),
-    #               size = 4,
-    #               vjust = -0.05,
-    #               hjust = -0.08)
-    # }
-    
     ## Display error bars from 5th and 95th percentile when select checkbox for X: ----
     p <- p +
       geom_errorbar(aes(xmax = risk_95perc,
@@ -711,7 +674,7 @@ function(input, output, session) {
     },
     content = function(file){
       ggsave(file, plot_risk_output(), 
-             device = input$extension_risk,  width = 15, height = 10)
+             device = input$extension_risk,  width = 15, height = 20)
     }
   )
   
