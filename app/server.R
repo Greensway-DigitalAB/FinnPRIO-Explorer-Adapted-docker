@@ -511,7 +511,7 @@ function(input, output, session) {
                          taxonomic_group,
                          quarantine_status,
                          presence_in_europe, 
-                         entry_median,
+                         entry_mean,
                          establishment_and_spread_mean,
                          invasion_mean, 
                          impact_mean,
@@ -529,7 +529,7 @@ function(input, output, session) {
                  "Taxonomic group" = "taxonomic_group", 
                  "Quarantine status" = "quarantine_status",
                  "Presence in Europe" = "presence_in_europe", 
-                 "Entry" = "entry_median", 
+                 "Entry" = "entry_mean", 
                  "Establishment and spread" = "establishment_and_spread_mean",
                  "Invasion" = "invasion_mean", 
                  "Impact" = "impact_mean",
@@ -573,7 +573,7 @@ function(input, output, session) {
       formatStyle("Pest",  fontWeight = "bold", fontStyle = "normal") |> 
       
       formatStyle("Entry",
-                  background = styleColorBar(cleanfinnprioresults$entry_median, "#DAE375"),
+                  background = styleColorBar(cleanfinnprioresults$entry_mean, "#DAE375"),
                   backgroundSize = "98% 88%",
                   backgroundRepeat = "no-repeat",
                   backgroundPosition = "center") |> 
