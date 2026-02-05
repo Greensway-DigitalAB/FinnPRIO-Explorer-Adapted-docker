@@ -265,7 +265,7 @@ ui <- function(request){
                         fluidRow(
                           column(9,
                                  plotOutput(outputId = "riskrank_plot",
-                                            height = "1200px")
+                                            height = "3000px")
                                  ),
                           column(3,
                                 wellPanel(
