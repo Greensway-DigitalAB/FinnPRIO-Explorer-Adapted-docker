@@ -619,7 +619,7 @@ function(input, output, session) {
       mutate(pest_label = paste0(pest, " [",eppo_code,"]"))
     
     risk_order <- data |>
-      arrange(risk_mean) |>
+      arrange(risk_median) |>
       pull(pest_label)
     
     
