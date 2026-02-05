@@ -360,7 +360,7 @@ function(input, output, session) {
       paste("plot", input$extension, sep = ".")
     },
     content = function(file){
-      ggsave(file, plot_output(), device = input$extension,  width = 15, height = 10)
+      ggsave(file, plot_output(), device = input$extension,  width = 15, height = 40)
     }
   )
   
